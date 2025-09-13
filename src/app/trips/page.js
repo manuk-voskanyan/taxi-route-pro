@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { Layout } from '@/components/layout'
 import Chat from '@/components/chat'
+import TripMap from '@/components/trip-map'
 
 export default function Trips() {
   const { data: session } = useSession()
@@ -22,6 +23,8 @@ export default function Trips() {
   const [currentTripImages, setCurrentTripImages] = useState([])
   const [chatOpen, setChatOpen] = useState(false)
   const [selectedTrip, setSelectedTrip] = useState(null)
+  const [mapOpen, setMapOpen] = useState(false)
+  const [selectedMapTrip, setSelectedMapTrip] = useState(null)
 
   useEffect(() => {
     fetchTrips()
@@ -97,6 +100,16 @@ export default function Trips() {
   const closeChat = () => {
     setChatOpen(false)
     setSelectedTrip(null)
+  }
+
+  const openMap = (trip) => {
+    setSelectedMapTrip(trip)
+    setMapOpen(true)
+  }
+
+  const closeMap = () => {
+    setMapOpen(false)
+    setSelectedMapTrip(null)
   }
 
   // Close modal on Escape key press
@@ -390,8 +403,20 @@ export default function Trips() {
                         )}
                       </div>
 
-                      {/* Action Button */}
-                      <div className="ml-6">
+                      {/* Action Buttons */}
+                      <div className="ml-6 flex space-x-3">
+                        {/* Map Button - always visible */}
+                        <button
+                          onClick={() => openMap(trip)}
+                          className="px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors cursor-pointer flex items-center"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                          </svg>
+                          Քարտեզ
+                        </button>
+
+                        {/* Contact/Booking Button */}
                         {session ? (
                           trip.availableSeats > 0 ? (
                             <button
@@ -469,6 +494,16 @@ export default function Trips() {
           onClose={closeChat}
           isOpen={chatOpen}
           onMessagesRead={() => {}}
+        />
+      )}
+
+      {/* Map Component */}
+      {mapOpen && selectedMapTrip && (
+        <TripMap
+          fromCity={selectedMapTrip.fromCity}
+          toCity={selectedMapTrip.toCity}
+          isOpen={mapOpen}
+          onClose={closeMap}
         />
       )}
     </Layout>

@@ -13,7 +13,7 @@ class SocketService {
         ? `${window.location.protocol}//${window.location.hostname}:${window.location.port}` 
         : (process.env.NODE_ENV === 'production' 
            ? process.env.NEXTAUTH_URL 
-           : 'http://localhost:3001')
+           : 'http://localhost:3000')
 
       this.socket = io(socketUrl, {
         path: '/api/socket',

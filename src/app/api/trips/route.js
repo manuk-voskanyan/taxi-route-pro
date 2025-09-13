@@ -17,16 +17,27 @@ export async function GET(request) {
     const fromCity = searchParams.get('fromCity')
     const toCity = searchParams.get('toCity')
     const departureDate = searchParams.get('departureDate')
+    const limit = searchParams.get('limit')
     const status = searchParams.get('status') || 'active'
 
     let trips
     if (useMockStorage) {
-      trips = await mockTripStorage.findAll({
+      let allTrips = await mockTripStorage.findAll({
         fromCity,
         toCity,
         departureDate,
         status
       })
+      
+      // Sort by creation date descending (newest first)
+      allTrips = allTrips.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      
+      // Apply limit if specified
+      if (limit) {
+        allTrips = allTrips.slice(0, parseInt(limit))
+      }
+      
+      trips = allTrips
     } else {
       // Build GROQ query with filters
       let query = '*[_type == "trip"'
@@ -50,7 +61,11 @@ export async function GET(request) {
       query += ' && status == $status'
       params.status = status
 
-      query += ']{ _id, fromCity, toCity, departureDate, departureTime, availableSeats, totalSeats, pricePerSeat, currency, description, stops, status, driver->{ _id, name, avatar{ asset->{ _id, url } }, driverInfo { licenseNumber, carModel, carColor, plateNumber, company, carImages[]{ asset->{ _id, url } } } }, createdAt } | order(departureDate asc, departureTime asc)'
+      query += ']{ _id, fromCity, toCity, departureDate, departureTime, availableSeats, totalSeats, pricePerSeat, currency, description, stops, status, driver->{ _id, name, avatar{ asset->{ _id, url } }, driverInfo { licenseNumber, carModel, carColor, plateNumber, company, carImages[]{ asset->{ _id, url } } } }, createdAt } | order(createdAt desc)'
+      
+      if (limit) {
+        query += `[0...${parseInt(limit)}]`
+      }
 
       trips = await client.fetch(query, params)
     }

@@ -77,3 +77,89 @@ input[type="checkbox"] + label {
 [onclick] {
   cursor: pointer;
 }
+
+/* Leaflet CSS for maps */
+@import "leaflet/dist/leaflet.css";
+
+/* Custom Map Styles */
+.custom-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.custom-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+
+.start-marker .marker-pin {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.end-marker .marker-pin {
+  background: linear-gradient(135deg, #dc2626, #991b1b);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid white;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+.marker-pin svg {
+  transform: rotate(45deg);
+  width: 16px;
+  height: 16px;
+}
+
+.marker-label {
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 9px;
+  font-weight: bold;
+  margin-top: 8px;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+
+.start-marker .marker-label {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.end-marker .marker-label {
+  background: linear-gradient(135deg, #dc2626, #991b1b);
+}
+
+/* Custom popup styles */
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+  border: 1px solid rgba(0,0,0,0.1) !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+
+.leaflet-popup-tip {
+  box-shadow: 0 3px 14px rgba(0,0,0,0.15) !important;
+}

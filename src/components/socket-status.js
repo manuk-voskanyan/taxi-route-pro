@@ -41,7 +41,7 @@ export default function SocketStatus() {
   const statusConfig = {
     connected: { color: 'bg-green-500', text: 'Real-time chat connected' },
     disconnected: { color: 'bg-red-500', text: 'Chat disconnected - trying to reconnect...' },
-    error: { color: 'bg-orange-500', text: 'Chat connection error' }
+    error: {  }
   }
 
   const config = statusConfig[status]

@@ -167,15 +167,8 @@ export async function PUT(request) {
     }
 
     // Mark messages as read
-    const updates = messageIds.map(id => ({
-      id,
-      patch: {
-        isRead: true
-      }
-    }))
-
-    await client.transaction(updates.map(update => 
-      client.patch(update.id).set(update.patch)
+    await client.transaction(messageIds.map(id => 
+      client.patch(id).set({ isRead: true })
     )).commit()
 
     return NextResponse.json({ message: 'Messages marked as read' })

@@ -223,7 +223,7 @@ export default function Chat({
           })
         }
       } else {
-        console.error('Failed to mark messages as read:', response.status)
+        console.log('Failed to mark messages as read:', response.status)
       }
     } catch (error) {
       console.error('Error in markAllAsRead:', error)

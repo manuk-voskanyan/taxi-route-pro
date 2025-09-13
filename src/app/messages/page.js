@@ -57,6 +57,19 @@ export default function Messages() {
   }
 
   const openChat = (conversation) => {
+    // Optimistically zero unread count locally
+    setConversations(prev => prev.map(conv => {
+      const key = `${conv.trip._id}-${conv.otherUser._id}`
+      const clickedKey = `${conversation.trip._id}-${conversation.otherUser._id}`
+      if (key === clickedKey) return { ...conv, unreadCount: 0 }
+      return conv
+    }))
+
+    // Notify navigation badge to update instantly
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('refreshUnreadCount'))
+    }
+
     setSelectedConversation(conversation)
     setChatOpen(true)
   }
@@ -66,6 +79,22 @@ export default function Messages() {
     setSelectedConversation(null)
     // Refresh conversations when chat closes
     fetchConversations()
+  }
+
+  // NEW: handle messages read callback from Chat component
+  const handleMessagesRead = ({ conversationKey, count }) => {
+    if (!conversationKey) return
+    setConversations(prev => prev.map(conv => {
+      const key = `${conv.trip._id}-${conv.otherUser._id}`
+      if (key === conversationKey) {
+        return { ...conv, unreadCount: 0 }
+      }
+      return conv
+    }))
+    // Inform other components (e.g., navigation) to refresh total unread count
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('refreshUnreadCount'))
+    }
   }
 
   const formatDate = (dateString) => {
@@ -213,7 +242,7 @@ export default function Messages() {
           driverName={selectedConversation.otherUser.name}
           onClose={closeChat}
           isOpen={chatOpen}
-          onMessagesRead={() => {}}
+          onMessagesRead={handleMessagesRead}
         />
       )}
     </Layout>
