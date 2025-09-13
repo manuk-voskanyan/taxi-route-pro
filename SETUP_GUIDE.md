@@ -26,7 +26,7 @@ Edit your `.env.local` file in the project root:
 ```env
 # NextAuth.js Configuration
 NEXTAUTH_SECRET=your-nextauth-secret-key-change-this-in-production
-NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_URL=https://taxi-route-pro.vercel.app
 
 # Sanity Configuration - REPLACE THESE VALUES
 NEXT_PUBLIC_SANITY_PROJECT_ID=your-actual-project-id-here
@@ -52,7 +52,7 @@ npm run dev
 
 ### Step 4: Test the Setup
 
-1. Go to http://localhost:3000
+1. Go to https://taxi-route-pro.vercel.app
 2. Click "Sign Up"
 3. Try creating a driver account with car images
 
