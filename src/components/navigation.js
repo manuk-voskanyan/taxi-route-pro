@@ -2,11 +2,96 @@
 
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import socketService from '@/lib/socket'
 
 export function Navigation() {
   const { data: session, status } = useSession()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+   const fetchUnreadCount = async () => {
+     try {
+       if (status !== 'authenticated') {
+         console.log('Navigation: Not authenticated, setting unread count to 0')
+         setUnreadCount(0)
+         return
+       }
+       
+       console.log('Navigation: Fetching unread count from server...')
+       const res = await fetch('/api/conversations', {
+         method: 'GET',
+         headers: { 'Content-Type': 'application/json' },
+         credentials: 'include',
+       })
+       const data = await res.json()
+       
+       if (res.ok) {
+         const totalUnread = (data.conversations || []).reduce(
+           (sum, c) => sum + (c.unreadCount || 0),
+           0
+         )
+         console.log('Navigation: Server returned total unread count:', totalUnread)
+         console.log('Navigation: Conversation unread counts:', (data.conversations || []).map(c => ({ 
+           key: `${c.trip?._id?.slice(-6)}-${c.otherUser?._id?.slice(-6)}`, 
+           unread: c.unreadCount 
+         })))
+         setUnreadCount(totalUnread)
+       } else {
+         console.error('Navigation: Failed to fetch unread count:', res.status)
+       }
+     } catch (e) {
+       console.error('Navigation: Error fetching unread count:', e)
+     }
+   }
+
+  // Fetch unread conversations count periodically
+  useEffect(() => {
+    fetchUnreadCount() // Fetch immediately on component mount/session change
+
+    const interval = setInterval(() => {
+      fetchUnreadCount()
+    }, 10000) // Re-check every 10 seconds
+
+    // Listen for incoming messages to bump the badge in real-time
+    const socket = socketService.connect()
+      socketService.onNewMessage((msg) => {
+        if (
+          msg?.receiverId === session?.user?.id ||
+          msg?.receiver?._id === session?.user?.id
+        ) {
+          // We fetch again to get the most accurate count from the server
+          console.log('Navigation: New message received, refreshing unread count')
+          fetchUnreadCount()
+        }
+      })
+
+      // Listen for window focus to refresh count (when user switches back to tab)
+      const handleFocus = () => {
+        console.log('Navigation: Window focused, refreshing unread count')
+        fetchUnreadCount()
+      }
+      
+      // Listen for immediate refresh requests from chat
+      const handleRefreshUnreadCount = () => {
+        console.log('Navigation: Received refresh request, updating unread count immediately')
+        fetchUnreadCount()
+      }
+      
+      if (typeof window !== 'undefined') {
+        window.addEventListener('focus', handleFocus)
+        window.addEventListener('refreshUnreadCount', handleRefreshUnreadCount)
+      }
+
+      return () => {
+        clearInterval(interval)
+        socketService.offAllListeners()
+        if (typeof window !== 'undefined') {
+          window.removeEventListener('focus', handleFocus)
+          window.removeEventListener('refreshUnreadCount', handleRefreshUnreadCount)
+        }
+      }
+  }, [status, session?.user?.id])
 
   const handleSignOut = () => {
     signOut({ callbackUrl: '/' })
@@ -47,8 +132,13 @@ export function Navigation() {
                     </Link>
                   </>
                 )}
-                <Link href="/messages" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                <Link href="/messages" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors relative">
                   Նամակներ
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] leading-none px-1.5 py-1 rounded-full">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
                 </Link>
                 <Link href="/profile" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   Պրոֆիլ
@@ -133,8 +223,13 @@ export function Navigation() {
                       </Link>
                     </>
                   )}
-                  <Link href="/messages" className="text-gray-700 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium">
+                  <Link href="/messages" className="text-gray-700 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium relative">
                     Նամակներ
+                    {unreadCount > 0 && (
+                      <span className="absolute top-0 right-2 bg-red-600 text-white text-[10px] leading-none px-1.5 py-1 rounded-full">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
                   </Link>
                   <Link href="/profile" className="text-gray-700 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium">
                     Պրոֆիլ

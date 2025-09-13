@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Navigation } from './navigation'
+import MessageNotifications from './notification'
+import SocketStatus from './socket-status'
 
 export function Layout({ children }) {
   const [showDemoNotice, setShowDemoNotice] = useState(false)
@@ -27,6 +29,8 @@ export function Layout({ children }) {
       )}
       <Navigation />
       <main>{children}</main>
+      <MessageNotifications />
+      <SocketStatus />
     </div>
   )
 }

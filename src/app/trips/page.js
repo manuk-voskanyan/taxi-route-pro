@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { Layout } from '@/components/layout'
+import Chat from '@/components/chat'
 
 export default function Trips() {
   const { data: session } = useSession()
@@ -19,6 +20,8 @@ export default function Trips() {
   const [imageModalOpen, setImageModalOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [currentTripImages, setCurrentTripImages] = useState([])
+  const [chatOpen, setChatOpen] = useState(false)
+  const [selectedTrip, setSelectedTrip] = useState(null)
 
   useEffect(() => {
     fetchTrips()
@@ -84,6 +87,16 @@ export default function Trips() {
   const closeImageModal = () => {
     setImageModalOpen(false)
     setSelectedImage(null)
+  }
+
+  const openChat = (trip) => {
+    setSelectedTrip(trip)
+    setChatOpen(true)
+  }
+
+  const closeChat = () => {
+    setChatOpen(false)
+    setSelectedTrip(null)
   }
 
   // Close modal on Escape key press
@@ -382,10 +395,7 @@ export default function Trips() {
                         {session ? (
                           trip.availableSeats > 0 ? (
                             <button
-                              onClick={() => {
-                                // TODO: Open messaging modal or redirect to contact page
-                                alert('Հաղորդագրների գործառույթը շուտով! Հիմա, խնդրում ենք անմիջապես կապվել վարորդի հետ:')
-                              }}
+                              onClick={() => openChat(trip)}
                               className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors cursor-pointer"
                             >
                               Կապվել վարորդի հետ
@@ -448,6 +458,18 @@ export default function Trips() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Chat Modal */}
+      {chatOpen && selectedTrip && (
+        <Chat
+          tripId={selectedTrip._id}
+          driverId={selectedTrip.driver._id}
+          driverName={selectedTrip.driver.name}
+          onClose={closeChat}
+          isOpen={chatOpen}
+          onMessagesRead={() => {}}
+        />
       )}
     </Layout>
   )

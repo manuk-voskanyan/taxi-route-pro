@@ -52,7 +52,7 @@ npm run dev
 
 ### Step 4: Test the Setup
 
-1. Go to https://taxi-route-pro.vercel.app
+1. Go to http://localhost:3000/trips
 2. Click "Sign Up"
 3. Try creating a driver account with car images
 
