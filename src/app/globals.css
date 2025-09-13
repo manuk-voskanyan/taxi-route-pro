@@ -24,3 +24,56 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Global button styles */
+button, 
+input[type="submit"], 
+input[type="button"], 
+input[type="reset"],
+[role="button"],
+.cursor-pointer {
+  cursor: pointer;
+}
+
+button:disabled, 
+input[type="submit"]:disabled, 
+input[type="button"]:disabled, 
+input[type="reset"]:disabled,
+[role="button"]:disabled,
+.cursor-not-allowed {
+  cursor: not-allowed;
+}
+
+/* Link hover states */
+a:hover {
+  cursor: pointer;
+}
+
+/* Interactive elements */
+select, 
+.select,
+.dropdown {
+  cursor: pointer;
+}
+
+/* File upload areas */
+input[type="file"],
+[type="file"] + label,
+.file-upload-area {
+  cursor: pointer;
+}
+
+/* Radio buttons and checkboxes */
+input[type="radio"], 
+input[type="checkbox"],
+input[type="radio"] + label,
+input[type="checkbox"] + label {
+  cursor: pointer;
+}
+
+/* Clickable cards/areas */
+.clickable,
+.card-clickable,
+[onclick] {
+  cursor: pointer;
+}
