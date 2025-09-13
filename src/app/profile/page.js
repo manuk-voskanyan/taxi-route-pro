@@ -204,10 +204,23 @@ export default function Profile() {
         setSuccess('Պրոֆիլը հաջողությամբ թարմացվել է')
         setIsEditing(false)
         setCarImages([])
-        // Update session if name changed
+        // Update session if name or avatar changed
+        const sessionUpdates = {}
         if (profileData.name !== session.user.name) {
-          await update({ name: profileData.name })
+          sessionUpdates.name = profileData.name
         }
+        
+        // Check if avatar was updated
+        const newAvatarUrl = data.user.avatar?.asset?.url || data.user.avatar?.url
+        const currentAvatarUrl = session.user.image || session.user.avatar?.asset?.url || session.user.avatar?.url
+        if (newAvatarUrl !== currentAvatarUrl) {
+          sessionUpdates.image = newAvatarUrl
+        }
+        
+        if (Object.keys(sessionUpdates).length > 0) {
+          await update(sessionUpdates)
+        }
+        
         await fetchProfile() // Refresh profile data
       } else {
         setError(data.error || 'Չհաջողվեց թարմացնել պրոֆիլը')

@@ -30,7 +30,7 @@ export function Navigation() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-2">
             <Link href="/trips" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
               Ճանապարհներ
             </Link>
@@ -55,20 +55,21 @@ export function Navigation() {
                 </Link>
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
-                    {session.user.image ? (
+                    {session.user.image || session.user.avatar?.asset?.url || session.user.avatar?.url ? (
                       <img
-                        src={session.user.image}
+                        src={session.user.image || session.user.avatar?.asset?.url || session.user.avatar?.url}
                         alt={session.user.name}
-                        className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                        className="w-8 h-8 rounded-full object-cover border-2 border-gray-200 shadow-sm"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
                       />
-                    ) : (
-                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                        <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
-                    <span className="text-gray-700 text-sm">
+                    ) : null}
+                    <div className={`w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm ${(session.user.image || session.user.avatar?.asset?.url || session.user.avatar?.url) ? 'hidden' : 'flex'}`}>
+                      {session.user.name ? session.user.name.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                    <span className="text-gray-700 text-sm font-medium">
                       Բարև, {session.user.name}
                     </span>
                   </div>
@@ -140,22 +141,23 @@ export function Navigation() {
                   </Link>
                   <div className="border-t border-gray-200 pt-4">
                     <div className="px-3 py-2 flex items-center space-x-3">
-                      {session.user.image ? (
+                      {session.user.image || session.user.avatar?.asset?.url || session.user.avatar?.url ? (
                         <img
-                          src={session.user.image}
+                          src={session.user.image || session.user.avatar?.asset?.url || session.user.avatar?.url}
                           alt={session.user.name}
-                          className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                          className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 shadow-sm"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
                         />
-                      ) : (
-                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                          <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      )}
+                      ) : null}
+                      <div className={`w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-lg ${(session.user.image || session.user.avatar?.asset?.url || session.user.avatar?.url) ? 'hidden' : 'flex'}`}>
+                        {session.user.name ? session.user.name.charAt(0).toUpperCase() : 'U'}
+                      </div>
                       <div>
                         <p className="text-gray-700 text-sm font-medium">Բարև, {session.user.name}</p>
-                        <p className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full inline-block">
+                        <p className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full inline-block font-medium">
                           {session.user.userType === 'driver' ? 'Վարորդ' : 'Ուղևոր'}
                         </p>
                       </div>
