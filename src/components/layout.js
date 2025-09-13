@@ -15,7 +15,7 @@ export function Layout({ children }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mock Storage Notice - only show after hydration */}
-      {showDemoNotice && (
+      {/* {showDemoNotice && (
         <div className="bg-yellow-100 border-b border-yellow-200 px-4 py-2">
           <div className="max-w-7xl mx-auto text-center">
             <p className="text-yellow-800 text-sm">
@@ -24,7 +24,7 @@ export function Layout({ children }) {
             </p>
           </div>
         </div>
-      )}
+      )} */}
       <Navigation />
       <main>{children}</main>
     </div>
