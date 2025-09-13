@@ -25,6 +25,11 @@ export default function Trips() {
   const [selectedTrip, setSelectedTrip] = useState(null)
   const [mapOpen, setMapOpen] = useState(false)
   const [selectedMapTrip, setSelectedMapTrip] = useState(null)
+  const [locationLoading, setLocationLoading] = useState({
+    from: false,
+    to: false
+  })
+  const [locationError, setLocationError] = useState(null)
 
   useEffect(() => {
     fetchTrips()
@@ -80,6 +85,93 @@ export default function Trips() {
       toCity: '',
       departureDate: ''
     })
+    setLocationError(null)
+  }
+
+  // Geolocation functions
+  const getCurrentLocation = () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by this browser'))
+        return
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          })
+        },
+        (error) => {
+          let errorMessage = 'Unable to get location'
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = 'Location access denied by user'
+              break
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = 'Location information unavailable'
+              break
+            case error.TIMEOUT:
+              errorMessage = 'Location request timeout'
+              break
+          }
+          reject(new Error(errorMessage))
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutes
+        }
+      )
+    })
+  }
+
+  const reverseGeocode = async (latitude, longitude) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`
+      )
+      
+      if (!response.ok) {
+        throw new Error('Failed to get location name')
+      }
+
+      const data = await response.json()
+      
+      // Extract city/town name from the response
+      const city = data.address?.city || 
+                   data.address?.town || 
+                   data.address?.village || 
+                   data.address?.municipality ||
+                   data.address?.county ||
+                   'Unknown Location'
+      
+      return city
+    } catch (error) {
+      console.error('Reverse geocoding error:', error)
+      throw new Error('Failed to get location name')
+    }
+  }
+
+  const useMyLocation = async (field) => {
+    setLocationError(null)
+    setLocationLoading(prev => ({ ...prev, [field]: true }))
+    
+    try {
+      const position = await getCurrentLocation()
+      const cityName = await reverseGeocode(position.latitude, position.longitude)
+      
+      setSearchFilters(prev => ({
+        ...prev,
+        [field === 'from' ? 'fromCity' : 'toCity']: cityName
+      }))
+    } catch (error) {
+      console.error('Location error:', error)
+      setLocationError(error.message)
+    } finally {
+      setLocationLoading(prev => ({ ...prev, [field]: false }))
+    }
   }
 
   const openImageModal = (imageUrl, carModel) => {
@@ -175,25 +267,63 @@ export default function Trips() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Որտեղից</label>
-                <input
-                  type="text"
-                  name="fromCity"
-                  value={searchFilters.fromCity}
-                  onChange={handleSearchChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ելակետային քաղաք"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    name="fromCity"
+                    value={searchFilters.fromCity}
+                    onChange={handleSearchChange}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Ելակետային քաղաք"
+                  />
+                  <button
+                    onClick={() => useMyLocation('from')}
+                    disabled={locationLoading.from}
+                    className="px-3 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    title="Օգտագործել իմ տեղանքը"
+                  >
+                    {locationLoading.from ? (
+                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 0 1 4 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Ուր</label>
-                <input
-                  type="text"
-                  name="toCity"
-                  value={searchFilters.toCity}
-                  onChange={handleSearchChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Նպատակային քաղաք"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    name="toCity"
+                    value={searchFilters.toCity}
+                    onChange={handleSearchChange}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Նպատակային քաղաք"
+                  />
+                  <button
+                    onClick={() => useMyLocation('to')}
+                    disabled={locationLoading.to}
+                    className="px-3 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    title="Օգտագործել իմ տեղանքը"
+                  >
+                    {locationLoading.to ? (
+                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 0 1 4 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Ամսաթիվ</label>
@@ -215,6 +345,28 @@ export default function Trips() {
                 </button>
               </div>
             </div>
+            
+            {/* Location Error Message */}
+            {locationError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <div className="flex">
+                  <svg className="h-5 w-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <div className="text-sm text-red-700">
+                    <strong>Տեղանքի սխալ:</strong> {locationError}
+                  </div>
+                  <button 
+                    onClick={() => setLocationError(null)}
+                    className="ml-auto text-red-400 hover:text-red-600"
+                  >
+                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Results */}
