@@ -104,9 +104,14 @@ export default function Home() {
                   </div>
                   
                   {/* Background Image */}
-                  <div className="h-48 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 relative overflow-hidden">
-                    {/* City illustration overlay */}
-                    <div className="absolute inset-0 bg-[#165FF2] bg-opacity-20"></div>
+                  <div className="h-60 relative overflow-hidden">
+                    <img 
+                      src="/road.jpg" 
+                      alt="Road background" 
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    {/* Overlay for better text readability */}
+                    <div className="absolute inset-0 bg-[#000000a3]"></div>
                     <div className="absolute bottom-4 left-4 text-white">
                       <div className="flex items-center space-x-2 mb-2">
                         <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
