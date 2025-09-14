@@ -36,20 +36,6 @@ export default function Chat({
     if (isOpen && session?.user?.id) {
       let timeoutId
       
-      // IMMEDIATELY notify parent that this conversation should show 0 unread
-      console.log('🔥 CHAT OPENED - Immediately setting unread count to 0')
-      if (onMessagesRead) {
-        onMessagesRead({
-          conversationKey: `${tripId}-${driverId}`,
-          count: 0,
-        })
-      }
-      
-      // Force immediate refresh of navigation badge
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('refreshUnreadCount'))
-      }
-      
       const initializeSocket = async () => {
         try {
           // Initialize socket connection with error handling
@@ -100,10 +86,15 @@ export default function Chat({
             console.error('Socket error:', error)
           })
 
-          // Mark messages as read in background (after UI is already updated)
-          if (!hasMarkedReadRef.current) {
-            setTimeout(() => markAllAsRead(loadedMessages), 500) // Background task
+          // IMPROVED: Always mark messages as read when chat opens
+          if (loadedMessages.length > 0) {
+            console.log('📧 Chat opened - marking all received messages as read')
+            await markAllAsReadImmediate(loadedMessages)
             hasMarkedReadRef.current = true
+          } else {
+            // Even if no messages to mark, still update the UI to show 0 unread
+            console.log('📧 No messages found, but ensuring UI shows 0 unread')
+            updateUnreadCountEverywhere(0)
           }
 
         } catch (error) {
@@ -231,6 +222,106 @@ export default function Chat({
       }
     } catch (error) {
       console.error('Error in markAllAsRead:', error)
+    }
+  }
+
+  // IMPROVED: Mark messages as read with immediate UI feedback
+  const markAllAsReadImmediate = async (messagesToMark) => {
+    try {
+      console.log('🚀 MARK AS READ - Processing messages for user:', session?.user?.id)
+      
+      // Step 1: Filter unread messages that belong to current user
+      const unreadIds = messagesToMark
+        .filter((m) => {
+          const isForMe = m.receiver?._id === session?.user?.id
+          const isUnread = !m.isRead
+          console.log(`Message ${m._id?.slice(-6)}: isForMe=${isForMe}, isUnread=${isUnread}`)
+          return isForMe && isUnread
+        })
+        .map((m) => m._id)
+
+      console.log('📧 Found', unreadIds.length, 'unread messages to mark as read')
+
+      // Step 2: IMMEDIATE UI feedback - show the user that messages are being marked as read
+      updateUnreadCountEverywhere(0)
+
+      if (unreadIds.length === 0) {
+        console.log('✅ No unread messages found - UI already updated')
+        return
+      }
+
+      // Step 3: Update backend 
+      console.log('🔄 Updating backend database...')
+      const response = await fetch('/api/messages', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ messageIds: unreadIds }),
+      })
+      
+      if (response.ok) {
+        console.log('✅ Backend successfully updated', unreadIds.length, 'messages as read')
+        
+        // Step 4: Update local chat state after backend success
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            unreadIds.includes(msg._id) ? { ...msg, isRead: true } : msg
+          )
+        )
+
+        // Step 5: Confirm UI updates after database processing
+        setTimeout(() => {
+          console.log('🔄 Confirming UI updates after database processing')
+          updateUnreadCountEverywhere(0, true) // Force refresh with cache busting
+        }, 800) // Increased delay for Sanity processing
+
+        // Step 6: Final confirmation refresh
+        setTimeout(() => {
+          console.log('🔄 Final confirmation refresh')
+          updateUnreadCountEverywhere(0, true)
+        }, 2000)
+        
+      } else {
+        console.error('❌ Backend update failed, status:', response.status)
+        const errorText = await response.text()
+        console.error('❌ Error details:', errorText)
+        // Still keep UI consistent even if backend fails
+      }
+      
+    } catch (error) {
+      console.error('❌ Error in markAllAsReadImmediate:', error)
+      // Still ensure UI shows correct state
+      updateUnreadCountEverywhere(0)
+    }
+  }
+
+  // IMPROVED: Update unread count across ALL components with better timing
+  const updateUnreadCountEverywhere = (newCount, forceRefresh = false) => {
+    console.log('🔄 UPDATING UNREAD COUNT EVERYWHERE:', newCount, forceRefresh ? '(FORCED)' : '')
+    
+    // 1. Notify parent component (Messages page)
+    if (onMessagesRead) {
+      onMessagesRead({
+        conversationKey: `${tripId}-${driverId}`,
+        count: newCount,
+      })
+    }
+    
+    // 2. Force navigation badge refresh with multiple attempts
+    if (typeof window !== 'undefined') {
+      // Immediate refresh
+      window.dispatchEvent(new CustomEvent('refreshUnreadCount'))
+      
+      // Staggered refreshes for better reliability
+      if (forceRefresh) {
+        setTimeout(() => window.dispatchEvent(new CustomEvent('refreshUnreadCount')), 200)
+        setTimeout(() => window.dispatchEvent(new CustomEvent('refreshUnreadCount')), 600)
+        setTimeout(() => window.dispatchEvent(new CustomEvent('refreshUnreadCount')), 1200)
+      } else {
+        // Standard refresh pattern
+        setTimeout(() => window.dispatchEvent(new CustomEvent('refreshUnreadCount')), 100)
+        setTimeout(() => window.dispatchEvent(new CustomEvent('refreshUnreadCount')), 300)
+      }
     }
   }
 

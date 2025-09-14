@@ -15,6 +15,8 @@ export async function GET(request) {
 
     // Query to get all messages where the current user is sender or receiver
     // Group by trip and get the latest message for each conversation
+    // Add cache-busting by including current timestamp in non-functional way
+    const cacheTime = new Date().getTime()
     const query = `
       *[_type == "message" && (sender._ref == "${userId}" || receiver._ref == "${userId}")] {
         _id,
@@ -73,7 +75,22 @@ export async function GET(request) {
     // Convert map to array
     const conversations = Array.from(conversationsMap.values())
 
-    return NextResponse.json({ conversations })
+    // Create response with proper cache headers
+    const response = NextResponse.json({ conversations })
+    
+    // Check if this is a cache-busting request
+    const { searchParams } = new URL(request.url)
+    const skipCache = searchParams.has('t')
+    
+    if (skipCache) {
+      // Prevent caching for cache-busting requests
+      response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+      response.headers.set('Pragma', 'no-cache')
+      response.headers.set('Expires', '0')
+      console.log('Conversations API: Cache-busting request, preventing caching')
+    }
+
+    return response
   } catch (error) {
     console.error('Error fetching conversations:', error)
     return NextResponse.json({ error: 'Failed to fetch conversations' }, { status: 500 })

@@ -10,7 +10,7 @@ export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
 
-   const fetchUnreadCount = async () => {
+   const fetchUnreadCount = async (skipCache = false) => {
      try {
        if (status !== 'authenticated') {
          console.log('Navigation: Not authenticated, setting unread count to 0')
@@ -18,10 +18,19 @@ export function Navigation() {
          return
        }
        
-       console.log('Navigation: Fetching unread count from server...')
-       const res = await fetch('/api/conversations', {
+       console.log('Navigation: Fetching unread count from server...', skipCache ? '(SKIP CACHE)' : '')
+       
+       // Add cache-busting parameter when forcing refresh
+       const url = skipCache 
+         ? `/api/conversations?t=${Date.now()}` 
+         : '/api/conversations'
+       
+       const res = await fetch(url, {
          method: 'GET',
-         headers: { 'Content-Type': 'application/json' },
+         headers: { 
+           'Content-Type': 'application/json',
+           ...(skipCache && { 'Cache-Control': 'no-cache' })
+         },
          credentials: 'include',
        })
        const data = await res.json()
@@ -39,19 +48,22 @@ export function Navigation() {
          setUnreadCount(totalUnread)
        } else {
          console.error('Navigation: Failed to fetch unread count:', res.status)
+         const errorText = await res.text()
+         console.error('Navigation: Error details:', errorText)
        }
      } catch (e) {
        console.error('Navigation: Error fetching unread count:', e)
      }
    }
 
-  // Fetch unread conversations count periodically
+  // IMPROVED: More responsive unread count management
   useEffect(() => {
     fetchUnreadCount() // Fetch immediately on component mount/session change
 
+    // Reduced polling interval - only as fallback
     const interval = setInterval(() => {
       fetchUnreadCount()
-    }, 10000) // Re-check every 10 seconds
+    }, 30000) // Increased to 30 seconds since we have better event handling
 
     // Listen for incoming messages to bump the badge in real-time
     const socket = socketService.connect()
@@ -62,7 +74,8 @@ export function Navigation() {
         ) {
           // We fetch again to get the most accurate count from the server
           console.log('Navigation: New message received, refreshing unread count')
-          fetchUnreadCount()
+          // Add small delay to ensure message is saved to backend first
+          setTimeout(() => fetchUnreadCount(), 200)
         }
       })
 
@@ -72,10 +85,14 @@ export function Navigation() {
         fetchUnreadCount()
       }
       
-      // Listen for immediate refresh requests from chat
+      // IMPROVED: More aggressive refresh handler with cache busting
       const handleRefreshUnreadCount = () => {
         console.log('Navigation: Received refresh request, updating unread count immediately')
-        fetchUnreadCount()
+        // Multiple refresh attempts with cache busting to handle race conditions
+        fetchUnreadCount(true) // Skip cache immediately
+        setTimeout(() => fetchUnreadCount(true), 200)
+        setTimeout(() => fetchUnreadCount(true), 600)
+        setTimeout(() => fetchUnreadCount(true), 1200) // Final attempt with cache bust
       }
       
       if (typeof window !== 'undefined') {

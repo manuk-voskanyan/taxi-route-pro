@@ -57,17 +57,30 @@ export default function Messages() {
   }
 
   const openChat = (conversation) => {
-    // Optimistically zero unread count locally
+    // IMPROVED: Immediately zero unread count with aggressive update strategies
+    const conversationKey = `${conversation.trip._id}-${conversation.otherUser._id}`
+    
+    console.log('📧 Opening chat for conversation:', conversationKey, 'Current unread:', conversation.unreadCount)
+    
+    // 1. Immediately update local state to show 0 unread for this conversation
     setConversations(prev => prev.map(conv => {
       const key = `${conv.trip._id}-${conv.otherUser._id}`
-      const clickedKey = `${conversation.trip._id}-${conversation.otherUser._id}`
-      if (key === clickedKey) return { ...conv, unreadCount: 0 }
+      if (key === conversationKey) {
+        console.log('📧 Setting unread count to 0 for conversation:', key)
+        return { ...conv, unreadCount: 0 }
+      }
       return conv
     }))
 
-    // Notify navigation badge to update instantly
+    // 2. Immediately notify navigation badge to update (multiple attempts)
     if (typeof window !== 'undefined') {
+      console.log('📧 Triggering navigation badge refresh')
       window.dispatchEvent(new CustomEvent('refreshUnreadCount'))
+      
+      // Multiple refresh attempts for reliability
+      setTimeout(() => window.dispatchEvent(new CustomEvent('refreshUnreadCount')), 100)
+      setTimeout(() => window.dispatchEvent(new CustomEvent('refreshUnreadCount')), 300)
+      setTimeout(() => window.dispatchEvent(new CustomEvent('refreshUnreadCount')), 800)
     }
 
     setSelectedConversation(conversation)
@@ -81,19 +94,34 @@ export default function Messages() {
     fetchConversations()
   }
 
-  // NEW: handle messages read callback from Chat component
+  // ENHANCED: handle messages read callback from Chat component with comprehensive updates
   const handleMessagesRead = ({ conversationKey, count }) => {
     if (!conversationKey) return
+    
+    console.log('📧 Messages page: Received messagesRead callback for', conversationKey, 'count:', count)
+    
+    // Update local state immediately to reflect 0 unread
     setConversations(prev => prev.map(conv => {
       const key = `${conv.trip._id}-${conv.otherUser._id}`
       if (key === conversationKey) {
+        console.log('📧 Updating conversation unread count to 0 for:', key)
         return { ...conv, unreadCount: 0 }
       }
       return conv
     }))
-    // Inform other components (e.g., navigation) to refresh total unread count
+    
+    // ENHANCED: Aggressive navigation badge refresh with multiple timing strategies
     if (typeof window !== 'undefined') {
+      console.log('📧 Triggering multiple navigation badge refreshes')
+      
+      // Immediate refresh
       window.dispatchEvent(new CustomEvent('refreshUnreadCount'))
+      
+      // Staggered refreshes to handle database processing delays
+      setTimeout(() => window.dispatchEvent(new CustomEvent('refreshUnreadCount')), 100)
+      setTimeout(() => window.dispatchEvent(new CustomEvent('refreshUnreadCount')), 400)
+      setTimeout(() => window.dispatchEvent(new CustomEvent('refreshUnreadCount')), 1000)
+      setTimeout(() => window.dispatchEvent(new CustomEvent('refreshUnreadCount')), 2000)
     }
   }
 
