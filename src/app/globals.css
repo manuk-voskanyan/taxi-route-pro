@@ -163,3 +163,12 @@ input[type="checkbox"] + label {
 .leaflet-popup-tip {
   box-shadow: 0 3px 14px rgba(0,0,0,0.15) !important;
 }
+
+/* Hide scrollbar utility classes */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}

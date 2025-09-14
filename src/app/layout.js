@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "TaxiRoute Pro - Քաղաքարի տաքսի ամրագրման հարթակ",
   description: "Կապակցիր վարորդների և ուղևորների քաղաքարի տաքսի ճանապարհորդությունների համար: Ամրագրիր ճանապարհ կամ առաջարկիր ծառայություն այսօր:",
+  icons: {
+    icon: '/car-favicon.svg',
+    shortcut: '/car-favicon.svg',
+    apple: '/car-favicon.svg',
+  },
 };
 
 export default function RootLayout({ children }) {

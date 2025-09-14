@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Layout } from '@/components/layout'
+import RatingDisplay from '@/components/rating-display'
 
 export default function Profile() {
   const { data: session, status, update } = useSession()
@@ -565,6 +566,23 @@ export default function Profile() {
                         </div>
                       )}
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* User Ratings */}
+              {session?.user?.id && (
+                <div className="mb-8">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                    {profileData.userType === 'driver' ? 'Վարորդի գնահատականներ' : 'Ուղևորի գնահատականներ'}
+                  </h2>
+                  <div className="bg-gray-50 p-6 rounded-lg">
+                    <RatingDisplay 
+                      userId={session.user.id} 
+                      userType={profileData.userType}
+                      showDetailed={true}
+                      limit={10}
+                    />
                   </div>
                 </div>
               )}
