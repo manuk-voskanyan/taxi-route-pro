@@ -109,6 +109,7 @@ export const mockTripStorage = {
           driver: driver ? {
             _id: driver._id,
             name: driver.name,
+            phone: driver.phone,
             avatar: driver.avatar || null,
             driverInfo: {
               ...driver.driverInfo,

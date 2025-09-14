@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import RatingForm from './rating-form'
+import Swal from 'sweetalert2'
 
 export default function RatingModal({ 
   tripId, 
@@ -55,7 +56,13 @@ export default function RatingModal({
 
     } catch (error) {
       console.error('Error submitting rating:', error)
-      alert(`Սխալ: ${error.message}`)
+      Swal.fire({
+        title: 'Սխալ',
+        text: `Սխալ: ${error.message}`,
+        icon: 'error',
+        confirmButtonText: 'Հասկանալի',
+        confirmButtonColor: '#ef4444',
+      })
     } finally {
       setIsSubmitting(false)
     }

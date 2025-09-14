@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import StarRating from './star-rating'
+import Swal from 'sweetalert2'
 
 export default function RatingForm({ 
   tripId, 
@@ -59,7 +60,13 @@ export default function RatingForm({
 
     // Only validate essential fields for the API to work
     if (!tripId || !revieweeId || !reviewType) {
-      alert('Տեխնիկական սխալ: Խնդրում ենք նորից փորձել')
+      Swal.fire({
+        title: 'Տեխնիկական սխալ',
+        text: 'Տեխնիկական սխալ: Խնդրում ենք նորից փորձել',
+        icon: 'error',
+        confirmButtonText: 'Հասկանալի',
+        confirmButtonColor: '#ef4444',
+      })
       return
     }
 

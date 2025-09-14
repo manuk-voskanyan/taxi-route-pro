@@ -9,6 +9,7 @@ import TripMap from '@/components/trip-map'
 import StarRating from '@/components/star-rating'
 import RatingModal from '@/components/rating-modal'
 import DriverProfileModal from '@/components/driver-profile-modal'
+import Swal from 'sweetalert2'
 
 export default function Trips() {
   const { data: session } = useSession()
@@ -38,6 +39,7 @@ export default function Trips() {
   const [selectedTripForRating, setSelectedTripForRating] = useState(null)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [selectedDriver, setSelectedDriver] = useState(null)
+  const [contactDropdownOpen, setContactDropdownOpen] = useState({})
 
   useEffect(() => {
     fetchTrips()
@@ -275,6 +277,42 @@ export default function Trips() {
     setSelectedDriver(null)
   }
 
+  const toggleContactDropdown = (tripId) => {
+    setContactDropdownOpen(prev => ({
+      ...prev,
+      [tripId]: !prev[tripId]
+    }))
+  }
+
+  const handlePhoneContact = (trip) => {
+    const phoneNumber = trip.driver?.phone
+    if (phoneNumber) {
+      window.open(`tel:${phoneNumber}`, '_self')
+    } else {
+      Swal.fire({
+        title: 'Հեռախոսահամարը հասանելի չէ',
+        text: 'Վարորդի հեռախոսահամարը հասանելի չէ: Օգտագործեք չատը կապ հաստատելու համար:',
+        icon: 'warning',
+        confirmButtonText: 'Հասկանալի',
+        confirmButtonColor: '#3b82f6',
+      })
+    }
+    // Close the dropdown after action
+    setContactDropdownOpen(prev => ({
+      ...prev,
+      [trip._id]: false
+    }))
+  }
+
+  const handleChatContact = (trip) => {
+    openChat(trip)
+    // Close the dropdown after action
+    setContactDropdownOpen(prev => ({
+      ...prev,
+      [trip._id]: false
+    }))
+  }
+
   // Close modal on Escape key press
   useEffect(() => {
     const handleEscapeKey = (event) => {
@@ -294,6 +332,25 @@ export default function Trips() {
       document.body.style.overflow = 'unset'
     }
   }, [imageModalOpen])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const hasOpenDropdown = Object.values(contactDropdownOpen).some(isOpen => isOpen)
+      if (hasOpenDropdown && !event.target.closest('.relative')) {
+        setContactDropdownOpen({})
+      }
+    }
+
+    const hasOpenDropdown = Object.values(contactDropdownOpen).some(isOpen => isOpen)
+    if (hasOpenDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [contactDropdownOpen])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -691,20 +748,54 @@ export default function Trips() {
                           </button>
                         )}
 
-                        {/* Contact/Booking Button */}
-                        {session ? (
+                        {/* Contact/Booking Button - only for users who are NOT the trip creator */}
+                        {session && session.user?.id !== trip.driver?._id ? (
                           trip.availableSeats > 0 ? (
-                            <button
-                              onClick={() => openChat(trip)}
-                              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors cursor-pointer"
-                            >
-                              Կապվել վարորդի հետ
-                            </button>
+                            <div className="relative">
+                              <button
+                                onClick={() => toggleContactDropdown(trip._id)}
+                                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors cursor-pointer flex items-center"
+                              >
+                                Կապվել վարորդի հետ
+                                <svg className="w-4 h-4 ml-2" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                              
+                              {/* Dropdown */}
+                              {contactDropdownOpen[trip._id] && (
+                                <div className="absolute top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                                  <button
+                                    onClick={() => handleChatContact(trip)}
+                                    className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center transition-colors border-b border-gray-100"
+                                  >
+                                    <svg className="w-4 h-4 mr-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                                    </svg>
+                                    <span className="text-gray-900">Չատ</span>
+                                  </button>
+                                  <button
+                                    onClick={() => handlePhoneContact(trip)}
+                                    className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center transition-colors"
+                                  >
+                                    <svg className="w-4 h-4 mr-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                      <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                                    </svg>
+                                    <span className="text-gray-900">Հեռախոս</span>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <div className="px-6 py-3 bg-gray-300 text-gray-500 rounded-lg font-medium cursor-not-allowed">
                               Լրիվ ամրագրված
                             </div>
                           )
+                        ) : session ? (
+                          // User is logged in but this is their own trip - show different message
+                          <div className="px-6 py-3 bg-gray-200 text-gray-600 rounded-lg font-medium cursor-not-allowed">
+                            Ձեր ճանապարհորդությունն է
+                          </div>
                         ) : (
                           <Link
                             href="/auth/signin"

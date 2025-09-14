@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import socketService from '@/lib/socket'
 import RatingModal from './rating-modal'
+import Swal from 'sweetalert2'
 
 export default function Chat({
   tripId,
@@ -145,14 +146,32 @@ export default function Chat({
         console.error('Failed to fetch messages:', data.error)
         if (response.status === 401) {
           console.error('Authentication failed - session might be invalid')
-          alert('Authentication error. Please refresh the page and try logging in again.')
+          Swal.fire({
+            title: 'Նույնականացման սխալ',
+            text: 'Նույնականացման սխալ: Խնդրում ենք թարմացնել էջը և կրկին մտնել:',
+            icon: 'warning',
+            confirmButtonText: 'Հասկանալի',
+            confirmButtonColor: '#f59e0b',
+          })
         } else {
-          alert(`Error loading messages: ${data.error}`)
+          Swal.fire({
+            title: 'Սխալ հաղորդագրությունները բեռնելիս',
+            text: `Սխալ հաղորդագրությունները բեռնելիս: ${data.error}`,
+            icon: 'error',
+            confirmButtonText: 'Հասկանալի',
+            confirmButtonColor: '#ef4444',
+          })
         }
       }
     } catch (error) {
       console.error('Error fetching messages:', error)
-      alert(`Network error loading messages: ${error.message}`)
+      Swal.fire({
+        title: 'Ցանցային սխալ',
+        text: `Ցանցային սխալ հաղորդագրությունները բեռնելիս: ${error.message}`,
+        icon: 'error',
+        confirmButtonText: 'Հասկանալի',
+        confirmButtonColor: '#ef4444',
+      })
     } finally {
       setLoading(false)
     }
@@ -382,7 +401,13 @@ export default function Chat({
       } else {
         const errorData = await response.json()
         console.error('Failed to save message:', errorData)
-        alert('Failed to send message: ' + errorData.error)
+        Swal.fire({
+          title: 'Հաղորդագրությունը չհաջողվեց ուղարկել',
+          text: 'Հաղորդագրությունը չհաջողվեց ուղարկել: ' + errorData.error,
+          icon: 'error',
+          confirmButtonText: 'Հասկանալի',
+          confirmButtonColor: '#ef4444',
+        })
       }
 
       setNewMessage('')

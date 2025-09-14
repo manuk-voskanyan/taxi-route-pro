@@ -61,7 +61,7 @@ export async function GET(request) {
       query += ' && status == $status'
       params.status = status
 
-      query += ']{ _id, fromCity, toCity, departureDate, departureTime, availableSeats, totalSeats, pricePerSeat, currency, description, stops, status, driver->{ _id, name, avatar{ asset->{ _id, url } }, driverInfo { licenseNumber, carModel, carColor, plateNumber, company, carImages[]{ asset->{ _id, url } } } }, createdAt } | order(createdAt desc)'
+      query += ']{ _id, fromCity, toCity, departureDate, departureTime, availableSeats, totalSeats, pricePerSeat, currency, description, stops, status, driver->{ _id, name, phone, avatar{ asset->{ _id, url } }, driverInfo { licenseNumber, carModel, carColor, plateNumber, company, carImages[]{ asset->{ _id, url } } } }, createdAt } | order(createdAt desc)'
       
       if (limit) {
         query += `[0...${parseInt(limit)}]`

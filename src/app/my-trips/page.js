@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Layout } from '@/components/layout'
+import Swal from 'sweetalert2'
 
 export default function MyTrips() {
   const { data: session, status } = useSession()
@@ -169,19 +170,48 @@ export default function MyTrips() {
           trip._id === editingTrip._id ? result.trip : trip
         ))
         closeEditModal()
-        alert('Ճանապարհորդությունը հաջողությամբ թարմացված է!')
+        Swal.fire({
+          title: 'Հաջողություն!',
+          text: 'Ճանապարհորդությունը հաջողությամբ թարմացված է!',
+          icon: 'success',
+          confirmButtonText: 'Հասկանալի',
+          confirmButtonColor: '#10b981',
+        })
       } else {
         const error = await response.json()
-        alert(`Սխալ: ${error.error}`)
+        Swal.fire({
+          title: 'Սխալ!',
+          text: `Սխալ: ${error.error}`,
+          icon: 'error',
+          confirmButtonText: 'Հասկանալի',
+          confirmButtonColor: '#ef4444',
+        })
       }
     } catch (error) {
       console.error('Error updating trip:', error)
-      alert('Ցանցային սխալ: ' + error.message)
+      Swal.fire({
+        title: 'Ցանցային սխալ',
+        text: 'Ցանցային սխալ: ' + error.message,
+        icon: 'error',
+        confirmButtonText: 'Հասկանալի',
+        confirmButtonColor: '#ef4444',
+      })
     }
   }
 
   const cancelTrip = async (tripId) => {
-    if (!confirm('Համոզվա՞ծ եք, որ ցանկանում եք չեղարկել այս ճանապարհորդությունը:')) {
+    const result = await Swal.fire({
+      title: 'Հաստատել գործողությունը',
+      text: 'Համոզվա՞ծ եք, որ ցանկանում եք չեղարկել այս ճանապարհորդությունը:',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Այո, չեղարկել',
+      cancelButtonText: 'Ոչ',
+    })
+
+    if (!result.isConfirmed) {
       return
     }
 
@@ -196,14 +226,32 @@ export default function MyTrips() {
         setTrips(prev => prev.map(trip => 
           trip._id === tripId ? { ...trip, status: 'cancelled' } : trip
         ))
-        alert('Ճանապարհորդությունը չեղարկվել է!')
+        Swal.fire({
+          title: 'Հաջողություն!',
+          text: 'Ճանապարհորդությունը չեղարկվել է!',
+          icon: 'success',
+          confirmButtonText: 'Հասկանալի',
+          confirmButtonColor: '#10b981',
+        })
       } else {
         const error = await response.json()
-        alert(`Սխալ: ${error.error}`)
+        Swal.fire({
+          title: 'Սխալ!',
+          text: `Սխալ: ${error.error}`,
+          icon: 'error',
+          confirmButtonText: 'Հասկանալի',
+          confirmButtonColor: '#ef4444',
+        })
       }
     } catch (error) {
       console.error('Error cancelling trip:', error)
-      alert('Ցանցային սխալ: ' + error.message)
+      Swal.fire({
+        title: 'Ցանցային սխալ',
+        text: 'Ցանցային սխալ: ' + error.message,
+        icon: 'error',
+        confirmButtonText: 'Հասկանալի',
+        confirmButtonColor: '#ef4444',
+      })
     }
   }
 
